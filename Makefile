@@ -52,7 +52,7 @@ vendor-get: vendor-clean
 	export GOPATH=${VENDOR_DIR}
 	go get github.com/hpcloud/tail
 	go get github.com/BurntSushi/toml
-	# go get github.com/influxdata/influxdb
+	go get github.com/influxdata/influxdb
 
 .PHONY: vendor-update
 vendor-update: vendor-get
