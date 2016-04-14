@@ -1,0 +1,11 @@
+[files."/file/1"]
+follow = true
+onlynewlines = true
+regexp = "^$"
+timeLayout = "2006 Jan 2"
+
+[files."/file/2"]
+follow = false
+onlyNewLines = false
+regexp = "^.$"
+timeLayout = "2006-01-02"
