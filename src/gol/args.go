@@ -5,9 +5,10 @@ import (
 	"os"
 )
 
-func ParseArgs(args []string) ([]string, *FileTailerConfig) {
+func ParseArgs(args []string) map[string]*FileTailerConfig {
 	flags := flag.NewFlagSet("", flag.ExitOnError)
 
+	configFile := flags.String("c", "", "load config file")
 	help := flags.Bool("h", false, "show help")
 	follow := flags.Bool("f", false, "follow file(s)")
 	whole := flags.Bool("w", false, "scan whole file(s)")
@@ -23,16 +24,30 @@ func ParseArgs(args []string) ([]string, *FileTailerConfig) {
 		os.Exit(1)
 	}
 
-	if len(files) == 0 {
-		logger.Println("No files specified")
-		os.Exit(1)
+	config, err := ReadConfig(*configFile)
+
+	if err != nil {
+		logger.Println("Error reading config file", err)
+		config = tomlConfig{}
 	}
 
-	return files, &FileTailerConfig{
+	tailerConfig := &FileTailerConfig{
 		Follow:       *follow,
 		OnlyNewLines: !*whole,
 		Regexp:       *regexp,
 		TimeLayout:   *timeLayout,
 	}
+
+	for _, file := range files {
+		config.Files[file] = tailerConfig
+	}
+
+	if len(config.Files) == 0 {
+
+		logger.Println("No files specified")
+		os.Exit(1)
+	}
+
+	return config.Files
 
 }

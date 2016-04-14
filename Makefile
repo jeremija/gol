@@ -40,7 +40,8 @@ vendor_clean:
 # that existing location as the destination.
 vendor_get: vendor_clean
 	GOPATH=${PWD}/vendor go get -d -u -v \
-	github.com/hpcloud/tail
+	github.com/hpcloud/tail \
+	github.com/BurntSushi/toml
 
 vendor_update: vendor_get
 	rm -rf `find ./vendor/src -type d -name .git` \

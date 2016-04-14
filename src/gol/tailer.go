@@ -115,7 +115,8 @@ func parseDate(layout string, str string) time.Time {
 	t, err := time.ParseInLocation(layout, str, loc)
 
 	if err != nil {
-		panic(err)
+		logger.Println("Error parsing date")
+		t = time.Now()
 	}
 
 	logger.Println("Parsed date:", t)
@@ -124,9 +125,6 @@ func parseDate(layout string, str string) time.Time {
 }
 
 func getSystemLocation() *time.Location {
-	loc, err := time.LoadLocation("Local")
-	if err != nil {
-		panic(err)
-	}
+	loc, _ := time.LoadLocation("Local")
 	return loc
 }
