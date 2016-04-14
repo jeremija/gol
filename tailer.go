@@ -4,6 +4,7 @@ import (
 	"github.com/hpcloud/tail"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -25,10 +26,13 @@ type FileTailer struct {
 }
 
 type Line struct {
-	date    int64
-	message string
-	data    map[string]string
+	Date   time.Time
+	Fields map[string]interface{}
+	Tags   map[string]string
 }
+
+const TAG_PREFIX = "tag_"
+const DATE_FIELD = "date"
 
 func NewFileTailer(filename string, config *FileTailerConfig) *FileTailer {
 	return &FileTailer{
@@ -45,37 +49,41 @@ func NewFileTailer(filename string, config *FileTailerConfig) *FileTailer {
 func (f *FileTailer) parse(str string) Line {
 	re := f.Regexp
 	match := re.FindStringSubmatch(str)
-	parsed := make(map[string]string)
+	fields := make(map[string]interface{})
+	tags := make(map[string]string)
+	var date string
 
 	for i, name := range re.SubexpNames() {
 		if i != 0 && i < len(match) {
-			parsed[name] = match[i]
+			if name == DATE_FIELD {
+				date = match[i]
+			} else if strings.HasPrefix(name, TAG_PREFIX) {
+				name = name[len(TAG_PREFIX):]
+				tags[name] = match[i]
+			} else {
+				fields[name] = match[i]
+			}
 		}
 	}
 
-	var line Line
+	logger.Println("Line: ", fields)
 
-	logger.Println("Line: ", parsed)
-
-	if value, ok := parsed["date"]; ok {
-		date := parseDate(f.TimeLayout, value).UnixNano() / 1000000
-		line = Line{
-			data:    parsed,
-			date:    date,
-			message: parsed["message"],
-		}
-		delete(parsed, "date")
-		delete(parsed, "message")
-	} else {
-		logger.Println("Could not parse date")
-		line = Line{
-			data:    parsed,
-			date:    time.Now().UnixNano() / 1000000,
-			message: str,
+	if date != "" {
+		parsedDate := parseDate(f.TimeLayout, date)
+		return Line{
+			Date:   parsedDate,
+			Fields: fields,
+			Tags:   tags,
 		}
 	}
 
-	return line
+	logger.Println("Could not parse date")
+	fields["message"] = str
+	return Line{
+		Date:   time.Now(),
+		Fields: fields,
+		Tags:   tags,
+	}
 }
 
 func (f *FileTailer) processLines(t *tail.Tail) {

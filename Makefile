@@ -39,6 +39,11 @@ run: build
 .PHONY: test
 test:
 
+	go test ./
+
+.PHONY: test-verbose
+test-verbose:
+
 	go test -v ./
 
 .PHONY: vendor-clean

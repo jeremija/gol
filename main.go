@@ -11,7 +11,7 @@ var logger *log.Logger = log.New(os.Stdout, "gol:main ", log.Ldate|log.Ltime)
 func processLines(lines chan Line) {
 	defer wg.Done()
 	for line := range lines {
-		logger.Println("line:", line.date, line.message)
+		logger.Println("line:", line.Date, line.Tags, line.Fields)
 	}
 }
 
