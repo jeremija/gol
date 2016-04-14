@@ -39,7 +39,7 @@ run: build
 .PHONY: test
 test:
 
-	go test ./
+	go test ./ ./dispatchers
 
 .PHONY: test-verbose
 test-verbose:

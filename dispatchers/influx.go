@@ -6,44 +6,34 @@ import (
 	"time"
 )
 
-type InfluxConfig struct {
-	Timeout  time.Duration
-	Addr     string
-	Username string
-	Password string
-}
-
 type InfluxDispatcher struct {
-	timeout time.Duration
 	client  influx.Client
+	name    string
 	points  chan *influx.Point
+	timeout time.Duration
 }
 
-func NewInfluxDispatcher(config InfluxConfig) *InfluxDispatcher {
-	influxClient, err := influx.NewHTTPClient(influx.HTTPConfig{
-		Addr:     config.Addr,
-		Username: config.Username,
-		Password: config.Password,
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
+func NewInfluxDispatcher(client influx.Client, config DispatcherConfig) *InfluxDispatcher {
 	timeout := config.Timeout
 	if timeout == 0 {
 		timeout = 500 * time.Millisecond
 	}
 
+	name := config.Name
+	if name == "" {
+		name = "logs"
+	}
+
 	return &InfluxDispatcher{
-		client:  influxClient,
+		client:  client,
+		name:    name,
 		points:  make(chan *influx.Point),
 		timeout: config.Timeout,
 	}
 }
 
 func (d *InfluxDispatcher) Dispatch(event gol.Line) {
-	pt, err := influx.NewPoint("logs", event.Tags, event.Fields, event.Date)
+	pt, err := influx.NewPoint(d.name, event.Tags, event.Fields, event.Date)
 	if err != nil {
 		// should never happen
 		panic(err)
@@ -51,7 +41,8 @@ func (d *InfluxDispatcher) Dispatch(event gol.Line) {
 	d.points <- pt
 }
 
-func (d *InfluxDispatcher) Start() {
+// Start reading from points channel
+func (d *InfluxDispatcher) Start() error {
 	var bp influx.BatchPoints
 
 	for {
@@ -62,15 +53,22 @@ func (d *InfluxDispatcher) Start() {
 			}
 			bp.AddPoint(pt)
 		case <-time.After(d.timeout):
+			// Attempt to send every period defined by d.timeout. This makes
+			// it easy send new data in bulk, rather than making a request per
+			// event.
 			if bp != nil {
 				d.client.Write(bp)
 				bp = nil
 			}
 		}
 	}
+
+	return nil
 }
 
+// Close the points channel
 func (d *InfluxDispatcher) Stop() {
+	d.client.Close()
 	close(d.points)
 }
 
