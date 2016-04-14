@@ -5,21 +5,17 @@ import (
 	"os"
 )
 
-var logger *log.Logger = log.New(os.Stdout, "gol:main", log.Ldate|log.Ltime)
+var logger *log.Logger = log.New(os.Stdout, "gol:main ", log.Ldate|log.Ltime)
 
 func main() {
-	// log = log.New(os.Stderr, "gol", log.Ldate|log.Ltime)
+	files, config := ParseArgs(os.Args)
 
-	config := &FileTailerConfig{
-		Regexp:     "^\\[(?P<date>.*?)\\] (?P<message>.*)$",
-		TimeLayout: "2006-01-02 15:04",
-	}
-	filename := "/var/log/pacman.log"
+	logger.Println("Files:", files)
 
-	tailer := NewFileTailer(filename, config)
+	tailer := NewFileTailer(files[0], config)
 	tailer.Tail()
 
 	for line := range tailer.Lines {
-		log.Println("Got lines", line.date, line.message)
+		logger.Println("line:", line.date, line.message)
 	}
 }

@@ -29,9 +29,7 @@ func TestTailerNoFollow(t *testing.T) {
 	})
 
 	lines := make([]Line, 0)
-	fmt.Println("jerko")
 	for line := range tailer.Tail() {
-		fmt.Println("range")
 		lines = append(lines, line)
 	}
 

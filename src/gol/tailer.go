@@ -55,8 +55,9 @@ func (f *FileTailer) parse(str string) Line {
 
 	var line Line
 
+	logger.Println("Line: ", parsed)
+
 	if value, ok := parsed["date"]; ok {
-		logger.Println("Parsed date")
 		date := parseDate(f.TimeLayout, value).UnixNano() / 1000000
 		line = Line{
 			data:    parsed,
@@ -80,7 +81,6 @@ func (f *FileTailer) parse(str string) Line {
 func (f *FileTailer) processLines(t *tail.Tail) {
 	defer close(f.Lines)
 	for line := range t.Lines {
-		logger.Println("line:", line.Text)
 		f.Lines <- f.parse(line.Text)
 	}
 }
@@ -117,6 +117,8 @@ func parseDate(layout string, str string) time.Time {
 	if err != nil {
 		panic(err)
 	}
+
+	logger.Println("Parsed date:", t)
 
 	return t
 }
