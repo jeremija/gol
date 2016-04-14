@@ -1,55 +1,68 @@
-.PHONY: build doc fmt lint run test vendor_clean vendor_get vendor_update vet
+VENDOR_DIR := ${PWD}/_vendor
 
-# Prepend our vendor directory to the system GOPATH
-# so that import path resolution will prioritize
-# our third party snapshots.
-GOPATH := ${PWD}/vendor:${GOPATH}
+ifdef GOPATH
+	GOPATH := ${VENDOR_DIR}:${GOPATH}
+else
+	GOPATH := ${VENDOR_DIR}
+endif
+
 export GOPATH
 
+.PHONY: default
 default: build
 
+.PHONY: build
 build: vet
-	go build -v -o ./bin/gol ./src/gol
 
+	go build -v -o ./bin/gol ./
+
+.PHONY: doc
 doc:
+
 	godoc -http=:6060 -index
 
-# http://golang.org/cmd/go/#hdr-Run_gofmt_on_package_sources
+.PHONY: fmt
 fmt:
-	go fmt ./src/...
 
-# https://github.com/golang/lint
-# go get github.com/golang/lint/golint
+	go fmt ./
+
+.PHONY: lint
 lint:
+
 	golint ./src
 
+.PHONY: run
 run: build
+
 	./bin/gol
 
+.PHONY: test
 test:
-	go test ./src/...
 
-vendor_clean:
-	rm -dRf ./vendor/src
+	go test -v ./
 
-# We have to set GOPATH to just the vendor
-# directory to ensure that `go get` doesn't
-# update packages in our primary GOPATH instead.
-# This will happen if you already have the package
-# installed in GOPATH since `go get` will use
-# that existing location as the destination.
-vendor_get: vendor_clean
-	GOPATH=${PWD}/vendor go get -d -u -v \
-	github.com/hpcloud/tail \
-	github.com/BurntSushi/toml
+.PHONY: vendor-clean
+vendor-clean:
 
-vendor_update: vendor_get
-	rm -rf `find ./vendor/src -type d -name .git` \
-	&& rm -rf `find ./vendor/src -type d -name .hg` \
-	&& rm -rf `find ./vendor/src -type d -name .bzr` \
-	&& rm -rf `find ./vendor/src -type d -name .svn`
+	rm -dRf ./_vendor/src
 
-# http://godoc.org/code.google.com/p/go.tools/cmd/vet
-# go get code.google.com/p/go.tools/cmd/vet
+.PHONY: vendor-get
+vendor-get: vendor-clean
+
+	export GOPATH=${VENDOR_DIR}
+	go get github.com/hpcloud/tail
+	go get github.com/BurntSushi/toml
+	# go get github.com/influxdata/influxdb
+
+.PHONY: vendor-update
+vendor-update: vendor-get
+
+	rm -rf `find ${VENDOR_DIR}/src -type d -name .git`
+	rm -rf `find ${VENDOR_DIR}/src -type d -name .hg`
+	rm -rf `find ${VENDOR_DIR}/src -type d -name .bzr`
+	rm -rf `find ${VENDOR_DIR}/src -type d -name .svn`
+
+.PHONY: vet
 vet:
+
 	go vet ./src/...

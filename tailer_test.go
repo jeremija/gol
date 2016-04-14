@@ -1,4 +1,4 @@
-package main
+package gol
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ var dates = []int64{
 }
 
 func TestTailerNoFollow(t *testing.T) {
-	tailer := NewFileTailer("../../test/test_file", &FileTailerConfig{
+	tailer := NewFileTailer("./test/test_file", &FileTailerConfig{
 		Follow:       false,
 		OnlyNewLines: false,
 		Regexp:       "^\\[(?P<date>.*?)\\] \\[(?P<type>.*?)\\] (?P<message>.*)$",
@@ -48,7 +48,7 @@ func TestTailerNoFollow(t *testing.T) {
 }
 
 func TestTailerNoFollowIncomplete(t *testing.T) {
-	tailer := NewFileTailer("../../test/incomplete_file", &FileTailerConfig{
+	tailer := NewFileTailer("./test/incomplete_file", &FileTailerConfig{
 		Follow:       false,
 		OnlyNewLines: false,
 		Regexp:       "^\\[(?P<date>.*?)\\] \\[(?P<type>.*?)\\] (?P<message>.*)$",

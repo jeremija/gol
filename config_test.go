@@ -1,4 +1,4 @@
-package main
+package gol
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 func TestReadConfig(t *testing.T) {
 	const regexp = "(?P<date>(.*?:) ?P<message>(.*$)"
 
-	tomlConfig, err := ReadConfig("../../test/config.toml")
+	tomlConfig, err := ReadConfig("./test/config.toml")
 
 	if err != nil {
 		t.Error("Error reading config.toml", err)
