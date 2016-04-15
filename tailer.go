@@ -2,6 +2,7 @@ package gol
 
 import (
 	"github.com/hpcloud/tail"
+	"github.com/jeremija/gol/types"
 	"os"
 	"regexp"
 	"strings"
@@ -9,48 +10,64 @@ import (
 )
 
 type FileTailerConfig struct {
+	DefaultTags  map[string]string
+	Filename     string
+	FixNewLines  bool
 	Follow       bool
+	Name         string
 	OnlyNewLines bool
 	Regexp       string
 	TimeLayout   string
 }
 
 type FileTailer struct {
+	DefaultTags  map[string]string
+	FixNewLines  bool
 	Filename     string
+	Name         string
 	Follow       bool
-	Lines        chan Line
+	Lines        chan types.Line
 	Location     *time.Location
 	OnlyNewLines bool
 	Regexp       *regexp.Regexp
 	TimeLayout   string
+	lastValues   lastValues
 }
 
-type Line struct {
-	Date   time.Time
-	Fields map[string]interface{}
-	Tags   map[string]string
+type lastValues struct {
+	tags map[string]string
+	date time.Time
 }
 
 const TAG_PREFIX = "tag_"
 const DATE_FIELD = "date"
 
-func NewFileTailer(filename string, config *FileTailerConfig) *FileTailer {
+func NewFileTailer(config *FileTailerConfig) *FileTailer {
+	defaultTags := config.DefaultTags
+
+	if defaultTags == nil {
+		defaultTags = make(map[string]string)
+	}
+
 	return &FileTailer{
-		Filename:     filename,
+		DefaultTags:  defaultTags,
+		Filename:     config.Filename,
+		FixNewLines:  config.FixNewLines,
 		Follow:       config.Follow,
+		Lines:        make(chan types.Line),
+		Location:     getSystemLocation(),
+		Name:         config.Name,
 		OnlyNewLines: config.OnlyNewLines,
 		Regexp:       regexp.MustCompile(config.Regexp),
-		Lines:        make(chan Line),
-		Location:     getSystemLocation(),
 		TimeLayout:   config.TimeLayout,
 	}
 }
 
-func (f *FileTailer) parse(str string) Line {
+func (f *FileTailer) parse(str string) types.Line {
 	re := f.Regexp
 	match := re.FindStringSubmatch(str)
 	fields := make(map[string]interface{})
-	tags := make(map[string]string)
+	tags := copyTags(f.DefaultTags)
 	var date string
 
 	for i, name := range re.SubexpNames() {
@@ -66,22 +83,35 @@ func (f *FileTailer) parse(str string) Line {
 		}
 	}
 
-	logger.Println("Line: ", fields)
-
 	if date != "" {
 		parsedDate := parseDate(f.TimeLayout, date)
-		return Line{
+
+		f.lastValues.date = parsedDate
+		f.lastValues.tags = tags
+
+		return types.Line{
 			Date:   parsedDate,
 			Fields: fields,
+			Name:   f.Name,
 			Tags:   tags,
 		}
 	}
 
-	logger.Println("Could not parse date")
 	fields["message"] = str
-	return Line{
+
+	if f.FixNewLines && !f.lastValues.date.IsZero() {
+		return types.Line{
+			Date:   f.lastValues.date,
+			Fields: fields,
+			Name:   f.Name,
+			Tags:   f.lastValues.tags,
+		}
+	}
+
+	return types.Line{
 		Date:   time.Now(),
 		Fields: fields,
+		Name:   f.Name,
 		Tags:   tags,
 	}
 }
@@ -93,7 +123,7 @@ func (f *FileTailer) processLines(t *tail.Tail) {
 	}
 }
 
-func (f *FileTailer) Tail() chan Line {
+func (f *FileTailer) Tail() chan types.Line {
 	var loc *tail.SeekInfo = nil
 
 	if f.OnlyNewLines {
@@ -106,6 +136,7 @@ func (f *FileTailer) Tail() chan Line {
 	t, err := tail.TailFile(f.Filename, tail.Config{
 		Follow:   f.Follow,
 		Location: loc,
+		Logger:   logger,
 	})
 
 	if err != nil {
@@ -123,11 +154,11 @@ func parseDate(layout string, str string) time.Time {
 	t, err := time.ParseInLocation(layout, str, loc)
 
 	if err != nil {
-		logger.Println("Error parsing date")
+		// logger.Println("Error parsing date")
 		t = time.Now()
 	}
 
-	logger.Println("Parsed date:", t)
+	// logger.Println("Parsed date:", t)
 
 	return t
 }
@@ -135,4 +166,12 @@ func parseDate(layout string, str string) time.Time {
 func getSystemLocation() *time.Location {
 	loc, _ := time.LoadLocation("Local")
 	return loc
+}
+
+func copyTags(defaultTags map[string]string) map[string]string {
+	tags := make(map[string]string)
+	for key, value := range defaultTags {
+		tags[key] = value
+	}
+	return tags
 }

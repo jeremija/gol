@@ -20,7 +20,7 @@ default: build
 .PHONY: build
 build: vet
 
-	go build -v -o ./bin/gol ./
+	go build -v -o ./bin/gol ./app
 
 .PHONY: doc
 doc:
@@ -96,4 +96,4 @@ install:
 .PHONY: vet
 vet:
 
-	go vet ./src/...
+	go vet ./ ./dispatchers

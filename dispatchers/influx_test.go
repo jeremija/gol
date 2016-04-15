@@ -2,7 +2,7 @@ package dispatchers
 
 import (
 	influx "github.com/influxdata/influxdb/client/v2"
-	"github.com/jeremija/gol"
+	"github.com/jeremija/gol/types"
 	"strconv"
 	"testing"
 	"time"
@@ -10,9 +10,8 @@ import (
 
 func TestDisptcher(t *testing.T) {
 	client := NewMockInfluxClient()
-	dispatcher := NewInfluxDispatcher(client, DispatcherConfig{
-		Name:    "log",
-		Timeout: 30 * time.Millisecond,
+	dispatcher := newInfluxDispatcher(client, DispatcherConfig{
+		Timeout: "30ms",
 	})
 
 	defer dispatcher.Stop()
@@ -56,8 +55,8 @@ func TestDisptcher(t *testing.T) {
 
 func TestDispatcherBuffer(t *testing.T) {
 	client := NewMockInfluxClient()
-	dispatcher := NewInfluxDispatcher(client, DispatcherConfig{
-		Timeout: 20 * time.Millisecond,
+	dispatcher := newInfluxDispatcher(client, DispatcherConfig{
+		Timeout: "20ms",
 	})
 
 	defer dispatcher.Stop()
@@ -86,15 +85,16 @@ func TestDispatcherBuffer(t *testing.T) {
 
 }
 
-func makeLine(message string) gol.Line {
+func makeLine(message string) types.Line {
 	tags := make(map[string]string)
 	tags["type"] = "error"
 	fields := make(map[string]interface{})
 	fields["message"] = message
 
-	return gol.Line{
+	return types.Line{
 		Date:   time.Now(),
 		Fields: fields,
+		Name:   "log",
 		Tags:   tags,
 	}
 }

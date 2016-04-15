@@ -2,6 +2,7 @@ package gol
 
 import (
 	"fmt"
+	"github.com/jeremija/gol/types"
 	"testing"
 	"time"
 )
@@ -13,7 +14,7 @@ var messages = []string{
 	"starting full system upgrade",
 }
 
-var types = []string{"ALPM", "PACMAN"}
+var tagTypes = []string{"ALPM", "PACMAN"}
 
 var dates = []time.Time{
 	parseDate(layout, "2016-04-07 07:26"),
@@ -21,14 +22,20 @@ var dates = []time.Time{
 }
 
 func TestTailerNoFollow(t *testing.T) {
-	tailer := NewFileTailer("./test/test_file", &FileTailerConfig{
+	defualtTags := map[string]string{
+		"name": "file1.log",
+	}
+
+	tailer := NewFileTailer(&FileTailerConfig{
+		DefaultTags:  defualtTags,
+		Filename:     "./test/test_file",
 		Follow:       false,
 		OnlyNewLines: false,
 		Regexp:       "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
 		TimeLayout:   "2006-01-02 15:04",
 	})
 
-	lines := make([]Line, 0)
+	lines := make([]types.Line, 0)
 	for line := range tailer.Tail() {
 		lines = append(lines, line)
 	}
@@ -40,15 +47,19 @@ func TestTailerNoFollow(t *testing.T) {
 		if messages[i] != line.Fields["message"] {
 			t.Error("Messages do not match", messages[i], line.Fields["message"])
 		}
-		if types[i] != line.Tags["type"] {
-			t.Error("Types do not match", types[i], line.Tags["type"])
+		if tagTypes[i] != line.Tags["type"] {
+			t.Error("Types do not match", tagTypes[i], line.Tags["type"])
+		}
+		if line.Tags["name"] != "file1.log" {
+			t.Error("Default tag not used", line.Tags)
 		}
 	}
 
 }
 
 func TestTailerNoFollowIncomplete(t *testing.T) {
-	tailer := NewFileTailer("./test/incomplete_file", &FileTailerConfig{
+	tailer := NewFileTailer(&FileTailerConfig{
+		Filename:     "./test/incomplete_file",
 		Follow:       false,
 		OnlyNewLines: false,
 		Regexp:       "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
@@ -57,7 +68,7 @@ func TestTailerNoFollowIncomplete(t *testing.T) {
 
 	date := time.Now()
 
-	lines := make([]Line, 0)
+	lines := make([]types.Line, 0)
 	for line := range tailer.Tail() {
 		fmt.Println("range")
 		lines = append(lines, line)
@@ -80,7 +91,7 @@ func TestTailerNoFollowIncomplete(t *testing.T) {
 	if messages[1] != message {
 		t.Error("Messages do not match", messages[1], message)
 	}
-	if types[1] != line.Tags["type"] {
-		t.Error("Types do not match", types[1], line.Tags["type"])
+	if tagTypes[1] != line.Tags["type"] {
+		t.Error("Types do not match", tagTypes[1], line.Tags["type"])
 	}
 }

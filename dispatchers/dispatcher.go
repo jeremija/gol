@@ -1,19 +1,32 @@
 package dispatchers
 
 import (
-	"github.com/jeremija/gol"
-	"time"
+	"github.com/jeremija/gol/types"
 )
 
-type Dispatcher interface {
-	Dispatch(event gol.Line) error
-	Start()
-	Stop()
+type newDispatcherFunc func(DispatcherConfig) Dispatcher
+
+var dispatchers = map[string]newDispatcherFunc{
+	"influx": func(config DispatcherConfig) Dispatcher {
+		return NewInfluxDispatcher(config)
+	},
+	"noop": func(config DispatcherConfig) Dispatcher {
+		return NewNoopDispatcher(config)
+	},
 }
 
 type DispatcherConfig struct {
-	Name    string
-	Timeout time.Duration
+	Database     string
+	Dispatcher   string
+	MaxBatchSize int
+	Timeout      string
+	Props        map[string]string
+}
+
+type Dispatcher interface {
+	Dispatch(event types.Line) error
+	Start()
+	Stop()
 }
 
 type dispatcherError struct {
@@ -26,4 +39,14 @@ func (e dispatcherError) Error() string {
 
 func NewError(message string) dispatcherError {
 	return dispatcherError{message}
+}
+
+func MustGetDispatcher(config DispatcherConfig) Dispatcher {
+	newDispatcher, ok := dispatchers[config.Dispatcher]
+
+	if !ok {
+		panic(NewError("Dispatcher not found"))
+	}
+
+	return newDispatcher(config)
 }

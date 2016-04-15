@@ -7,32 +7,34 @@ import (
 func TestParseArgs(t *testing.T) {
 	const regexp = "(?P<date>(.*?:) ?P<message>(.*$)"
 
-	files := ParseArgs([]string{
+	config := ParseArgs([]string{
 		"gol",
-		"-r",
+		"--regexp",
 		regexp,
 		"/path/to/file1",
 	})
+
+	files := config.Files
 
 	if len(files) != 1 {
 		t.Error("Should have listed file1")
 	}
 
-	if _, ok := files["/path/to/file1"]; !ok {
-		t.Error("Should have listed file1")
+	fConfig := files[0]
+
+	if fConfig.Filename != "/path/to/file1" {
+		t.Error("Should have set fConfig.Filename", fConfig.Filename)
 	}
 
-	config := files["/path/to/file1"]
-
-	if config.Regexp != regexp {
+	if fConfig.Regexp != regexp {
 		t.Error("Should have gotten regexp")
 	}
 
-	if config.Follow == true {
+	if fConfig.Follow == true {
 		t.Error("Follow should be false by default")
 	}
 
-	if config.OnlyNewLines == false {
+	if fConfig.OnlyNewLines == false {
 		t.Error("OnlyNewLines should be true by default")
 	}
 }
