@@ -30,11 +30,11 @@ func TestParseArgs(t *testing.T) {
 		t.Error("Should have gotten regexp")
 	}
 
-	if fConfig.Follow == true {
-		t.Error("Follow should be false by default")
+	if fConfig.NoFollow != false {
+		t.Error("NoFollow should be false by default")
 	}
 
-	if fConfig.OnlyNewLines == false {
-		t.Error("OnlyNewLines should be true by default")
+	if fConfig.OldLines != false {
+		t.Error("OldLines should be false by default")
 	}
 }

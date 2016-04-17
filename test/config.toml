@@ -10,8 +10,8 @@
 
 [[files]]
     filename = "/file/1"
-    follow = true
-    onlynewlines = true
+    nofollow = true
+    oldlines = false
     regexp = "^$"
     timeLayout = "2006 Jan 2"
 
@@ -22,7 +22,7 @@
 
 [[files]]
     filename = "/file/2"
-    follow = false
-    onlyNewLines = false
+    nofollow = false
+    oldlines = true
     regexp = "^.$"
     timeLayout = "2006-01-02"

@@ -27,12 +27,12 @@ func TestTailerNoFollow(t *testing.T) {
 	}
 
 	tailer := NewFileTailer(&FileTailerConfig{
-		DefaultTags:  defualtTags,
-		Filename:     "./test/test_file",
-		Follow:       false,
-		OnlyNewLines: false,
-		Regexp:       "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
-		TimeLayout:   "2006-01-02 15:04",
+		DefaultTags: defualtTags,
+		Filename:    "./test/test_file",
+		NoFollow:    true,
+		OldLines:    true,
+		Regexp:      "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
+		TimeLayout:  "2006-01-02 15:04",
 	})
 
 	lines := make([]types.Line, 0)
@@ -59,11 +59,11 @@ func TestTailerNoFollow(t *testing.T) {
 
 func TestTailerNoFollowIncomplete(t *testing.T) {
 	tailer := NewFileTailer(&FileTailerConfig{
-		Filename:     "./test/incomplete_file",
-		Follow:       false,
-		OnlyNewLines: false,
-		Regexp:       "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
-		TimeLayout:   "2006-01-02 15:04",
+		Filename:   "./test/incomplete_file",
+		NoFollow:   true,
+		OldLines:   true,
+		Regexp:     "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
+		TimeLayout: "2006-01-02 15:04",
 	})
 
 	date := time.Now()

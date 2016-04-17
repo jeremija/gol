@@ -10,28 +10,28 @@ import (
 )
 
 type FileTailerConfig struct {
-	DefaultTags  map[string]string
-	Filename     string
-	FixNewLines  bool
-	Follow       bool
-	Name         string
-	OnlyNewLines bool
-	Regexp       string
-	TimeLayout   string
+	DefaultTags map[string]string
+	Filename    string
+	Name        string
+	NoFixLines  bool
+	NoFollow    bool
+	OldLines    bool
+	Regexp      string
+	TimeLayout  string
 }
 
 type FileTailer struct {
-	DefaultTags  map[string]string
-	FixNewLines  bool
-	Filename     string
-	Name         string
-	Follow       bool
-	Lines        chan types.Line
-	Location     *time.Location
-	OnlyNewLines bool
-	Regexp       *regexp.Regexp
-	TimeLayout   string
-	lastValues   lastValues
+	DefaultTags map[string]string
+	Filename    string
+	FixNewLines bool
+	Follow      bool
+	Lines       chan types.Line
+	Location    *time.Location
+	Name        string
+	OldLines    bool
+	Regexp      *regexp.Regexp
+	TimeLayout  string
+	lastValues  lastValues
 }
 
 type lastValues struct {
@@ -50,16 +50,16 @@ func NewFileTailer(config *FileTailerConfig) *FileTailer {
 	}
 
 	return &FileTailer{
-		DefaultTags:  defaultTags,
-		Filename:     config.Filename,
-		FixNewLines:  config.FixNewLines,
-		Follow:       config.Follow,
-		Lines:        make(chan types.Line),
-		Location:     getSystemLocation(),
-		Name:         config.Name,
-		OnlyNewLines: config.OnlyNewLines,
-		Regexp:       regexp.MustCompile(config.Regexp),
-		TimeLayout:   config.TimeLayout,
+		DefaultTags: defaultTags,
+		Filename:    config.Filename,
+		FixNewLines: !config.NoFixLines,
+		Follow:      !config.NoFollow,
+		Lines:       make(chan types.Line),
+		Location:    getSystemLocation(),
+		Name:        config.Name,
+		OldLines:    config.OldLines,
+		Regexp:      regexp.MustCompile(config.Regexp),
+		TimeLayout:  config.TimeLayout,
 	}
 }
 
@@ -126,7 +126,7 @@ func (f *FileTailer) processLines(t *tail.Tail) {
 func (f *FileTailer) Tail() chan types.Line {
 	var loc *tail.SeekInfo = nil
 
-	if f.OnlyNewLines {
+	if !f.OldLines {
 		loc = &tail.SeekInfo{
 			Offset: 0,
 			Whence: os.SEEK_END,

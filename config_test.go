@@ -37,12 +37,12 @@ func TestReadConfig(t *testing.T) {
 		t.Error("file1.DefaultTags not loaded", file1.DefaultTags)
 	}
 
-	if file1.Follow != true {
-		t.Error("file1.Follow should be true", file1.Follow)
+	if file1.NoFollow != true {
+		t.Error("file1.NoFollow should be true", file1.NoFollow)
 	}
 
-	if file1.OnlyNewLines != true {
-		t.Error("file1.OnlyNewLines should be true", file1.OnlyNewLines)
+	if file1.OldLines != false {
+		t.Error("file1.OldLines should be false", file1.OldLines)
 	}
 
 	if file1.Regexp != "^$" {
@@ -57,12 +57,12 @@ func TestReadConfig(t *testing.T) {
 		t.Error("file1.Filename should be /file/2", file2.Filename)
 	}
 
-	if file2.Follow != false {
-		t.Error("file1.Follow should be true", file2.Follow)
+	if file2.NoFollow != false {
+		t.Error("file1.NoFollow should be false", file2.NoFollow)
 	}
 
-	if file2.OnlyNewLines != false {
-		t.Error("file1.OnlyNewLines should be true", file2.OnlyNewLines)
+	if file2.OldLines != true {
+		t.Error("file1.OnlyNewLines should be true", file2.OldLines)
 	}
 
 	if file2.Regexp != "^.$" {

@@ -11,8 +11,8 @@ func ParseArgs(args []string) AppConfig {
 	configFile := flags.String("config", "", "load config file")
 	dryRun := flags.Bool("dry-run", false, "do not send data to dispatcher")
 	help := flags.Bool("help", false, "show help")
-	follow := flags.Bool("follow", false, "follow file(s)")
-	whole := flags.Bool("whole", false, "scan whole file(s)")
+	noFollow := flags.Bool("no-follow", false, "follow file(s)")
+	oldLines := flags.Bool("old-lines", false, "scan whole file(s)")
 	regexp := flags.String("regexp", "", "regexp to use")
 	timeLayout := flags.String(
 		"time", "2006-01-02T15:04:05.999Z07:00", "time layout")
@@ -40,11 +40,11 @@ func ParseArgs(args []string) AppConfig {
 
 	for _, file := range files {
 		tailerConfig := &FileTailerConfig{
-			Filename:     file,
-			Follow:       *follow,
-			OnlyNewLines: !*whole,
-			Regexp:       *regexp,
-			TimeLayout:   *timeLayout,
+			Filename:   file,
+			NoFollow:   *noFollow,
+			OldLines:   *oldLines,
+			Regexp:     *regexp,
+			TimeLayout: *timeLayout,
 		}
 		config.Files = append(config.Files, tailerConfig)
 	}

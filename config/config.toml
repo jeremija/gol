@@ -10,13 +10,13 @@
 
 [[files]]
     filename = "/home/jere/Documents/test.log"
-    name = "medieval-api"
-    follow = false
-    onlynewlines = false
-    fixnewlines = true
+    name = "app-logs"
+    nofollow = true
+    oldlines = true
+    nofixlines = false
     regexp = "^(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}[\\+\\-][0-9]{4}) (?P<tag_app>[a-zA-Z\\-]*?):(?P<message>.*)$"
     timeLayout = "2006-01-02T15:04:05.999-0700"
 
     [files.defaultTags]
-        project = "medieval-api"
-        instance = "edulcdcdvm001.nyumc.org"
+        project = "my-project"
+        instance = "node1.myproject.com"
