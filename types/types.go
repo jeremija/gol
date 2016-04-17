@@ -5,8 +5,9 @@ import (
 )
 
 type Line struct {
-	Date   time.Time
-	Fields map[string]interface{}
-	Name   string
-	Tags   map[string]string
+	Date     time.Time
+	Fields   map[string]interface{}
+	Name     string
+	Tags     map[string]string
+	RawValue string
 }

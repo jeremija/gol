@@ -90,10 +90,11 @@ func (f *FileTailer) parse(str string) types.Line {
 		f.lastValues.tags = tags
 
 		return types.Line{
-			Date:   parsedDate,
-			Fields: fields,
-			Name:   f.Name,
-			Tags:   tags,
+			Date:     parsedDate,
+			Fields:   fields,
+			Name:     f.Name,
+			RawValue: str,
+			Tags:     tags,
 		}
 	}
 
@@ -101,18 +102,20 @@ func (f *FileTailer) parse(str string) types.Line {
 
 	if f.FixNewLines && !f.lastValues.date.IsZero() {
 		return types.Line{
-			Date:   f.lastValues.date,
-			Fields: fields,
-			Name:   f.Name,
-			Tags:   f.lastValues.tags,
+			Date:     f.lastValues.date,
+			Fields:   fields,
+			Name:     f.Name,
+			RawValue: str,
+			Tags:     f.lastValues.tags,
 		}
 	}
 
 	return types.Line{
-		Date:   time.Now(),
-		Fields: fields,
-		Name:   f.Name,
-		Tags:   tags,
+		Date:     time.Now(),
+		Fields:   fields,
+		Name:     f.Name,
+		RawValue: str,
+		Tags:     tags,
 	}
 }
 
