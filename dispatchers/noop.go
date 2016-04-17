@@ -4,7 +4,7 @@ import (
 	"github.com/jeremija/gol/types"
 )
 
-func NewNoopDispatcher(config DispatcherConfig) *NoopDispatcher {
+func NewNoopDispatcher(config DispatcherConfig) Dispatcher {
 	return &NoopDispatcher{}
 }
 
@@ -19,3 +19,7 @@ func (d *NoopDispatcher) Start() {}
 
 // Close the points channel
 func (d *NoopDispatcher) Stop() {}
+
+func init() {
+	RegisterDispatcher("noop", NewNoopDispatcher)
+}

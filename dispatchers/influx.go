@@ -18,7 +18,7 @@ type InfluxDispatcher struct {
 	timeout      time.Duration
 }
 
-func NewInfluxDispatcher(config DispatcherConfig) *InfluxDispatcher {
+func NewInfluxDispatcher(config DispatcherConfig) Dispatcher {
 	client, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     config.Props["addr"],
 		Username: config.Props["username"],
@@ -123,4 +123,8 @@ func mustCreatePoints(database string) influx.BatchPoints {
 	}
 
 	return bp
+}
+
+func init() {
+	RegisterDispatcher("influx", NewInfluxDispatcher)
 }

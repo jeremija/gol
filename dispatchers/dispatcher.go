@@ -6,13 +6,13 @@ import (
 
 type newDispatcherFunc func(DispatcherConfig) Dispatcher
 
-var dispatchers = map[string]newDispatcherFunc{
-	"influx": func(config DispatcherConfig) Dispatcher {
-		return NewInfluxDispatcher(config)
-	},
-	"noop": func(config DispatcherConfig) Dispatcher {
-		return NewNoopDispatcher(config)
-	},
+var dispatchers = map[string]newDispatcherFunc{}
+
+func RegisterDispatcher(name string, createDispatcher newDispatcherFunc) {
+	if _, ok := dispatchers[name]; ok {
+		panic("Dispatcher " + name + " already registered")
+	}
+	dispatchers[name] = createDispatcher
 }
 
 type DispatcherConfig struct {
@@ -45,7 +45,7 @@ func MustGetDispatcher(config DispatcherConfig) Dispatcher {
 	newDispatcher, ok := dispatchers[config.Dispatcher]
 
 	if !ok {
-		panic(NewError("Dispatcher not found"))
+		panic(NewError("Dispatcher '" + config.Dispatcher + "' not found"))
 	}
 
 	return newDispatcher(config)
