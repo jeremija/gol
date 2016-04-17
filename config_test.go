@@ -14,18 +14,27 @@ func TestReadConfig(t *testing.T) {
 		return
 	}
 
+	if tomlConfig.Dispatcher.Dispatcher != "influx" {
+		t.Error("Error reading dispatcher")
+	}
+
+	if tomlConfig.Dispatcher.Props["addr"] != "http://localhost:8083" {
+		t.Error("Error reading influx config")
+	}
+
 	if len(tomlConfig.Files) != 2 {
 		t.Error("Should parse files from config")
 	}
 
-	file1, ok := tomlConfig.Files["/file/1"]
-	if !ok {
-		t.Error("Should have parsed config for /file/1")
+	file1 := tomlConfig.Files[0]
+	file2 := tomlConfig.Files[1]
+
+	if file1.Filename != "/file/1" {
+		t.Error("file1.Filename should be /file/1", file1.Filename)
 	}
 
-	file2, ok := tomlConfig.Files["/file/2"]
-	if !ok {
-		t.Error("Should have parsed config for /file/2")
+	if file1.DefaultTags["tag1"] != "value1" {
+		t.Error("file1.DefaultTags not loaded", file1.DefaultTags)
 	}
 
 	if file1.Follow != true {
@@ -42,6 +51,10 @@ func TestReadConfig(t *testing.T) {
 
 	if file1.TimeLayout != "2006 Jan 2" {
 		t.Error("Expected file1.TimeLayout 2006 Jan 2", file1.TimeLayout)
+	}
+
+	if file2.Filename != "/file/2" {
+		t.Error("file1.Filename should be /file/2", file2.Filename)
 	}
 
 	if file2.Follow != false {

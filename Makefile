@@ -6,6 +6,12 @@ else
 	GOPATH := ${VENDOR_DIR}
 endif
 
+PROJECT := github.com/jeremija/gol
+DEPS := \
+	github.com/hpcloud/tail \
+	github.com/BurntSushi/toml \
+	github.com/influxdata/influxdb/client/v2
+
 export GOPATH
 
 .PHONY: default
@@ -14,7 +20,7 @@ default: build
 .PHONY: build
 build: vet
 
-	go build -v -o ./bin/gol ./
+	go build -v -o ./bin/gol ./app
 
 .PHONY: doc
 doc:
@@ -39,6 +45,11 @@ run: build
 .PHONY: test
 test:
 
+	go test ./ ./dispatchers
+
+.PHONY: test-verbose
+test-verbose:
+
 	go test -v ./
 
 .PHONY: vendor-clean
@@ -50,9 +61,15 @@ vendor-clean:
 vendor-get: vendor-clean
 
 	export GOPATH=${VENDOR_DIR}
-	go get github.com/hpcloud/tail
-	go get github.com/BurntSushi/toml
-	# go get github.com/influxdata/influxdb
+
+	@for dep in ${DEPS}; do \
+		echo getting dependency $$dep; \
+		go get -u $$dep; \
+	done
+
+	mkdir -p ${VENDOR_DIR}/${PROJECT}
+	rmdir ${VENDOR_DIR}/${PROJECT}
+	ln -s ../../../.. ${VENDOR_DIR}/src/${PROJECT}
 
 .PHONY: vendor-update
 vendor-update: vendor-get
@@ -62,7 +79,21 @@ vendor-update: vendor-get
 	rm -rf `find ${VENDOR_DIR}/src -type d -name .bzr`
 	rm -rf `find ${VENDOR_DIR}/src -type d -name .svn`
 
+vendor-install:
+
+	export GOPATH=${VENDOR_DIR}
+
+	@for dep in ${DEPS}; do \
+		echo installing dependency $$dep; \
+		go install $$dep; \
+	done
+
+install:
+
+	export GOPATH=${VENDOR_DIR}
+	go install ${PROJECT}
+
 .PHONY: vet
 vet:
 
-	go vet ./src/...
+	go vet ./ ./dispatchers

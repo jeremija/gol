@@ -1,11 +1,28 @@
-[files."/file/1"]
-follow = true
-onlynewlines = true
-regexp = "^$"
-timeLayout = "2006 Jan 2"
+[dispatcher]
+    dispatcher = "influx"
+    name = "logs"
+    timeout = "10s"
 
-[files."/file/2"]
-follow = false
-onlyNewLines = false
-regexp = "^.$"
-timeLayout = "2006-01-02"
+    [dispatcher.props]
+        addr = "http://localhost:8083"
+        username = "root"
+        password = ""
+
+[[files]]
+    filename = "/file/1"
+    follow = true
+    onlynewlines = true
+    regexp = "^$"
+    timeLayout = "2006 Jan 2"
+
+    [files.defaultTags]
+        tag1 = "value1"
+        tag2 = "value2"
+
+
+[[files]]
+    filename = "/file/2"
+    follow = false
+    onlyNewLines = false
+    regexp = "^.$"
+    timeLayout = "2006-01-02"
