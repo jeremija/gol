@@ -1,6 +1,7 @@
 package dispatchers
 
 import (
+	"errors"
 	"github.com/jeremija/gol/types"
 )
 
@@ -29,23 +30,11 @@ type Dispatcher interface {
 	Stop()
 }
 
-type dispatcherError struct {
-	message string
-}
-
-func (e dispatcherError) Error() string {
-	return e.message
-}
-
-func NewError(message string) dispatcherError {
-	return dispatcherError{message}
-}
-
 func MustGetDispatcher(config DispatcherConfig) Dispatcher {
 	newDispatcher, ok := dispatchers[config.Dispatcher]
 
 	if !ok {
-		panic(NewError("Dispatcher '" + config.Dispatcher + "' not found"))
+		panic(errors.New("Dispatcher '" + config.Dispatcher + "' not found"))
 	}
 
 	return newDispatcher(config)

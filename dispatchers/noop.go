@@ -18,6 +18,7 @@ type NoopDispatcher struct{}
 
 func (d *NoopDispatcher) Dispatch(event types.Line) error {
 	echo(event.RawValue)
+	echo("  ok:    ", event.Ok)
 	echo("  date:  ", event.Date)
 	echo("  tags:  ", event.Tags)
 	echo("  fields:", event.Fields)

@@ -1,6 +1,7 @@
 package dispatchers
 
 import (
+	"errors"
 	influx "github.com/influxdata/influxdb/client/v2"
 	"github.com/jeremija/gol/types"
 	"log"
@@ -59,6 +60,9 @@ func newInfluxDispatcher(client influx.Client, config DispatcherConfig) *InfluxD
 }
 
 func (d *InfluxDispatcher) Dispatch(event types.Line) error {
+	if !event.Ok {
+		return errors.New("Line marked as not ok")
+	}
 	pt, err := influx.NewPoint(event.Name, event.Tags, event.Fields, event.Date)
 	if err != nil {
 		// should never happen

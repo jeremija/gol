@@ -8,6 +8,7 @@ type Line struct {
 	Date     time.Time
 	Fields   map[string]interface{}
 	Name     string
-	Tags     map[string]string
+	Ok       bool
 	RawValue string
+	Tags     map[string]string
 }

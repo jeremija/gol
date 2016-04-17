@@ -16,9 +16,14 @@ var messages = []string{
 
 var tagTypes = []string{"ALPM", "PACMAN"}
 
+func parse(dateString string) time.Time {
+	date, _ := parseDate(layout, dateString)
+	return date
+}
+
 var dates = []time.Time{
-	parseDate(layout, "2016-04-07 07:26"),
-	parseDate(layout, "2016-04-09 08:33"),
+	parse("2016-04-07 07:26"),
+	parse("2016-04-09 08:33"),
 }
 
 func TestTailerNoFollow(t *testing.T) {
@@ -80,9 +85,8 @@ func TestTailerNoFollowIncomplete(t *testing.T) {
 		t.Error("Unexpected message", message)
 	}
 	if date.UnixNano() > line.Date.UnixNano() {
-		t.Error("Unexpected date", line.Date)
+		t.Error("Should have set new date", line.Date)
 	}
-
 	line = lines[1]
 	message = line.Fields["message"]
 	if dates[1] != line.Date {
@@ -93,5 +97,72 @@ func TestTailerNoFollowIncomplete(t *testing.T) {
 	}
 	if tagTypes[1] != line.Tags["type"] {
 		t.Error("Types do not match", tagTypes[1], line.Tags["type"])
+	}
+	if tailer.lastValues.date != line.Date {
+		t.Error("Should have set lastValues.date")
+	}
+}
+
+func TestTailerNoFollowLastDate(t *testing.T) {
+	tailer := NewFileTailer(&FileTailerConfig{
+		Filename:   "./test/incomplete_file",
+		NoFollow:   true,
+		NoLastDate: false,
+		NoNewDate:  true,
+		OldLines:   true,
+		Regexp:     "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
+		TimeLayout: "2006-01-02 15:04",
+	})
+	date := parse("2001-01-02 01:59")
+	tailer.lastValues.date = date
+
+	lines := make([]types.Line, 0)
+	for line := range tailer.Tail() {
+		fmt.Println("range")
+		lines = append(lines, line)
+	}
+
+	line := lines[0]
+	if !line.Ok {
+		t.Error("First line should be marked as ok")
+	}
+	if line.Date != date {
+		t.Error("Should have used last date", line.Date)
+	}
+
+	line = lines[1]
+	if !line.Ok {
+		t.Error("Second line should be marked as ok")
+	}
+	if dates[1] != line.Date {
+		t.Error("Times do not match", dates[1], line.Date)
+	}
+}
+
+func TestTailerNoFollowNoLastDateNoNewDate(t *testing.T) {
+	tailer := NewFileTailer(&FileTailerConfig{
+		Filename:   "./test/incomplete_file",
+		NoFollow:   true,
+		NoLastDate: true,
+		NoNewDate:  true,
+		OldLines:   true,
+		Regexp:     "^\\[(?P<date>.*?)\\] \\[(?P<tag_type>.*?)\\] (?P<message>.*)$",
+		TimeLayout: "2006-01-02 15:04",
+	})
+
+	lines := make([]types.Line, 0)
+	for line := range tailer.Tail() {
+		fmt.Println("range")
+		lines = append(lines, line)
+	}
+
+	line := lines[0]
+	if line.Ok {
+		t.Error("First line should not be marked as ok")
+	}
+
+	line = lines[1]
+	if !line.Ok {
+		t.Error("Second line should be marked as ok")
 	}
 }

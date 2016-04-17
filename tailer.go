@@ -13,8 +13,9 @@ type FileTailerConfig struct {
 	DefaultTags map[string]string
 	Filename    string
 	Name        string
-	NoFixLines  bool
 	NoFollow    bool
+	NoLastDate  bool
+	NoNewDate   bool
 	OldLines    bool
 	Regexp      string
 	TimeLayout  string
@@ -23,11 +24,12 @@ type FileTailerConfig struct {
 type FileTailer struct {
 	DefaultTags map[string]string
 	Filename    string
-	FixNewLines bool
 	Follow      bool
 	Lines       chan types.Line
 	Location    *time.Location
 	Name        string
+	NoLastDate  bool
+	NoNewDate   bool
 	OldLines    bool
 	Regexp      *regexp.Regexp
 	TimeLayout  string
@@ -52,11 +54,12 @@ func NewFileTailer(config *FileTailerConfig) *FileTailer {
 	return &FileTailer{
 		DefaultTags: defaultTags,
 		Filename:    config.Filename,
-		FixNewLines: !config.NoFixLines,
 		Follow:      !config.NoFollow,
 		Lines:       make(chan types.Line),
 		Location:    getSystemLocation(),
 		Name:        config.Name,
+		NoLastDate:  config.NoLastDate,
+		NoNewDate:   config.NoNewDate,
 		OldLines:    config.OldLines,
 		Regexp:      regexp.MustCompile(config.Regexp),
 		TimeLayout:  config.TimeLayout,
@@ -83,39 +86,38 @@ func (f *FileTailer) parse(str string) types.Line {
 		}
 	}
 
-	if date != "" {
-		parsedDate := parseDate(f.TimeLayout, date)
+	parsedDate, err := parseDate(f.TimeLayout, date)
 
-		f.lastValues.date = parsedDate
-		f.lastValues.tags = tags
-
-		return types.Line{
-			Date:     parsedDate,
-			Fields:   fields,
-			Name:     f.Name,
-			RawValue: str,
-			Tags:     tags,
-		}
-	}
-
-	fields["message"] = str
-
-	if f.FixNewLines && !f.lastValues.date.IsZero() {
-		return types.Line{
-			Date:     f.lastValues.date,
-			Fields:   fields,
-			Name:     f.Name,
-			RawValue: str,
-			Tags:     f.lastValues.tags,
-		}
-	}
-
-	return types.Line{
-		Date:     time.Now(),
+	line := types.Line{
+		Date:     parsedDate,
 		Fields:   fields,
 		Name:     f.Name,
+		Ok:       true,
 		RawValue: str,
 		Tags:     tags,
+	}
+
+	if date != "" && err == nil && !parsedDate.IsZero() {
+		// parsing went well
+		f.lastValues.date = parsedDate
+		f.lastValues.tags = tags
+	} else {
+		// something went wrong during parsing, set raw value as message
+		fields["message"] = str
+		f.fixLine(&line)
+	}
+
+	return line
+}
+
+func (f *FileTailer) fixLine(line *types.Line) {
+	if !f.NoLastDate && !f.lastValues.date.IsZero() {
+		line.Date = f.lastValues.date
+		line.Tags = f.lastValues.tags
+	} else if !f.NoNewDate {
+		line.Date = time.Now()
+	} else {
+		line.Ok = false
 	}
 }
 
@@ -151,19 +153,9 @@ func (f *FileTailer) Tail() chan types.Line {
 	return f.Lines
 }
 
-func parseDate(layout string, str string) time.Time {
+func parseDate(layout string, str string) (time.Time, error) {
 	loc, _ := time.LoadLocation("Local")
-
-	t, err := time.ParseInLocation(layout, str, loc)
-
-	if err != nil {
-		// logger.Println("Error parsing date")
-		t = time.Now()
-	}
-
-	// logger.Println("Parsed date:", t)
-
-	return t
+	return time.ParseInLocation(layout, str, loc)
 }
 
 func getSystemLocation() *time.Location {

@@ -19,7 +19,7 @@ func TestDisptcher(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 2; i++ {
-			dispatcher.Dispatch(makeLine("msg" + strconv.Itoa(i)))
+			dispatcher.Dispatch(makeLine("msg"+strconv.Itoa(i), true))
 		}
 	}()
 
@@ -64,7 +64,7 @@ func TestDispatcherBuffer(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 2; i++ {
-			dispatcher.Dispatch(makeLine("msg" + strconv.Itoa(i)))
+			dispatcher.Dispatch(makeLine("msg"+strconv.Itoa(i), true))
 			time.Sleep(30 * time.Millisecond)
 		}
 	}()
@@ -85,7 +85,7 @@ func TestDispatcherBuffer(t *testing.T) {
 
 }
 
-func makeLine(message string) types.Line {
+func makeLine(message string, ok bool) types.Line {
 	tags := make(map[string]string)
 	tags["type"] = "error"
 	fields := make(map[string]interface{})
@@ -95,6 +95,7 @@ func makeLine(message string) types.Line {
 		Date:   time.Now(),
 		Fields: fields,
 		Name:   "log",
+		Ok:     ok,
 		Tags:   tags,
 	}
 }
