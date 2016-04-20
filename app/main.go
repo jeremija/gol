@@ -21,28 +21,30 @@ func processLines(dispatcher dispatchers.Dispatcher, lines chan types.Line) {
 var wg = sync.WaitGroup{}
 
 func main() {
-	config := gol.ParseArgs(os.Args)
-	logger.Printf("Using configuration: %+v\n", config)
+	appConfig := gol.ParseArgs(os.Args)
+	logger.Printf("Using configuration: %+v\n", appConfig)
 
-	for _, file := range config.Files {
+	for _, file := range appConfig.Files {
 		logger.Print("File: ", file.Filename)
 	}
 
-	if config.DryRun {
-		config.Dispatcher.Dispatcher = "noop"
+	if appConfig.DryRun {
+		appConfig.Dispatcher.Dispatcher = "noop"
 	}
 
-	logger.Println("Using dispatcher:", config.Dispatcher.Dispatcher)
-	dispatcher := dispatchers.MustGetDispatcher(config.Dispatcher)
+	logger.Println("Using dispatcher:", appConfig.Dispatcher.Dispatcher)
+	dispatcher := dispatchers.MustGetDispatcher(appConfig.Dispatcher)
 	go dispatcher.Start()
 	defer dispatcher.Stop()
 
-	wg.Add(len(config.Files))
+	wg.Add(len(appConfig.Files))
 
-	for _, config := range config.Files {
-		tailer := gol.NewFileTailer(config)
-		tailer.Tail()
-		go processLines(dispatcher, tailer.Lines)
+	for index, fileConfig := range appConfig.Files {
+		if appConfig.FileIndex < 0 || appConfig.FileIndex == index {
+			tailer := gol.NewFileTailer(fileConfig)
+			tailer.Tail()
+			go processLines(dispatcher, tailer.Lines)
+		}
 	}
 
 	wg.Wait()

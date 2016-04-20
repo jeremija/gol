@@ -6,9 +6,10 @@ import (
 )
 
 type AppConfig struct {
-	Files      []*FileTailerConfig
 	Dispatcher dispatchers.DispatcherConfig
 	DryRun     bool
+	FileIndex  int
+	Files      []*FileTailerConfig
 }
 
 func ReadConfig(file string) (AppConfig, error) {

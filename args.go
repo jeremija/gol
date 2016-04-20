@@ -16,6 +16,8 @@ func ParseArgs(args []string) AppConfig {
 	regexp := flags.String("regexp", "", "regexp to use")
 	timeLayout := flags.String(
 		"time", "2006-01-02T15:04:05.999Z07:00", "time layout")
+	fileIndex := flags.Int(
+		"index", -1, "only use configuration for n-th file, 0-indexed")
 
 	flags.Parse(args[1:])
 	files := flags.Args()
@@ -32,6 +34,7 @@ func ParseArgs(args []string) AppConfig {
 		config = AppConfig{}
 	}
 
+	config.FileIndex = *fileIndex
 	config.DryRun = *dryRun
 
 	if len(files) > 0 {
