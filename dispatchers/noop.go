@@ -31,6 +31,8 @@ func (d *NoopDispatcher) Start() {}
 // Close the points channel
 func (d *NoopDispatcher) Stop() {}
 
+func (d *NoopDispatcher) Wait() {}
+
 func init() {
 	RegisterDispatcher("noop", NewNoopDispatcher)
 }

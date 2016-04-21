@@ -6,6 +6,7 @@ import (
 	"github.com/jeremija/gol/types"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -16,7 +17,9 @@ type InfluxDispatcher struct {
 	database     string
 	maxBatchSize int
 	points       chan *influx.Point
+	running      bool
 	timeout      time.Duration
+	wg           sync.WaitGroup
 }
 
 func NewInfluxDispatcher(config DispatcherConfig) Dispatcher {
@@ -56,6 +59,7 @@ func newInfluxDispatcher(client influx.Client, config DispatcherConfig) *InfluxD
 		client:       client,
 		points:       make(chan *influx.Point),
 		timeout:      duration,
+		wg:           sync.WaitGroup{},
 	}
 }
 
@@ -74,8 +78,16 @@ func (d *InfluxDispatcher) Dispatch(event types.Line) error {
 
 // Start reading from points channel
 func (d *InfluxDispatcher) Start() {
+	if d.running {
+		panic("Dispatcher already running")
+	}
+	d.running = true
+	d.wg.Add(1)
 	logger.Println("Starting influx dispatcher")
-	defer logger.Println("Stopping influx dispatcher")
+	defer func() {
+		d.client.Close()
+		d.wg.Done()
+	}()
 
 	var bp influx.BatchPoints
 
@@ -93,6 +105,10 @@ func (d *InfluxDispatcher) Start() {
 	for {
 		select {
 		case pt := <-d.points:
+			if pt == nil {
+				logger.Println("Stopping influx dispatcher")
+				return
+			}
 			if bp != nil && len(bp.Points()) >= d.maxBatchSize {
 				write()
 			}
@@ -104,8 +120,12 @@ func (d *InfluxDispatcher) Start() {
 			// Attempt to send every period defined by d.timeout. This makes
 			// it easy send new data in bulk, rather than making a request per
 			// event.
+			logger.Println("timeout")
 			if bp != nil {
 				write()
+			}
+			if !d.running {
+				close(d.points)
 			}
 		}
 	}
@@ -113,8 +133,11 @@ func (d *InfluxDispatcher) Start() {
 
 // Close the points channel
 func (d *InfluxDispatcher) Stop() {
-	d.client.Close()
-	close(d.points)
+	d.running = false
+}
+
+func (d *InfluxDispatcher) Wait() {
+	d.wg.Wait()
 }
 
 func mustCreatePoints(database string) influx.BatchPoints {

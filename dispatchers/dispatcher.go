@@ -28,6 +28,7 @@ type Dispatcher interface {
 	Dispatch(event types.Line) error
 	Start()
 	Stop()
+	Wait()
 }
 
 func MustGetDispatcher(config DispatcherConfig) Dispatcher {

@@ -35,7 +35,10 @@ func main() {
 	logger.Println("Using dispatcher:", appConfig.Dispatcher.Dispatcher)
 	dispatcher := dispatchers.MustGetDispatcher(appConfig.Dispatcher)
 	go dispatcher.Start()
-	defer dispatcher.Stop()
+	defer func() {
+		dispatcher.Stop()
+		dispatcher.Wait()
+	}()
 
 	wg.Add(len(appConfig.Files))
 
