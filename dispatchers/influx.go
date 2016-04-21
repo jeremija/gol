@@ -3,6 +3,7 @@ package dispatchers
 import (
 	"errors"
 	influx "github.com/influxdata/influxdb/client/v2"
+	"github.com/jeremija/gol/tls"
 	"github.com/jeremija/gol/types"
 	"log"
 	"os"
@@ -24,9 +25,10 @@ type InfluxDispatcher struct {
 
 func NewInfluxDispatcher(config DispatcherConfig) Dispatcher {
 	client, err := influx.NewHTTPClient(influx.HTTPConfig{
-		Addr:     config.Props["addr"],
-		Username: config.Props["username"],
-		Password: config.Props["password"],
+		Addr:      config.Props["addr"],
+		Username:  config.Props["username"],
+		Password:  config.Props["password"],
+		TLSConfig: tls.GetTlsConfig(config.Props["cacerts"]),
 	})
 
 	if err != nil {
